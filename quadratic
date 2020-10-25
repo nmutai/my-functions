@@ -1,0 +1,23 @@
+# Solving a quadratic equation 
+# Constructing Quadratic Formula
+quadratic <- function(a,b,c){
+  if(determinant(a,b,c) > 0){ # first case D>0
+    x_1 = (-b + sqrt(determinant(a,b,c)))/(2*a)
+    x_2 = (-b - sqrt(determinant(a,b,c)))/(2*a)
+    result = c(x_1,x_2)
+  }
+  else if(determinant(a,b,c) == 0){ # second case D=0
+    x = -b/(2*a)
+  }
+  else {"There are no real roots."} # third case D<0
+}
+
+# Constructing determinant
+determinant <-function(a,b,c){
+  b^2-4*a*c
+}
+# Example
+a <- quadratic(a = 1, b = -2, c = 2)
+b <- quadratic(a = -1, b = 3, c = -1)
+c <- quadratic(a = 10, b = 13,c = 20)
+
