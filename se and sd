@@ -1,15 +1,15 @@
 # Difference between standard deviation(variability in a sample)
 # and standard error(the precision)
-
-
 se_sd <- function(x) {
     n <- length(x)
-    SD <- sd(x)
-    SE <- sd(x) / sqrt(n)
-    out <- list(standard_deviation = SD, 
+    m <- mean(x)
+    VAR <- (1/(n - 1)) * sum((x - m)^2)
+    SD <- sqrt(VAR)
+    SE <- SD / sqrt(n)
+    out <- list(standard_deviation = SD,
                 standard_error = SE)
     return(out)
-} 
+}
 
 # Example
 set.seed(1234)
