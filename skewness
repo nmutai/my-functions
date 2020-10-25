@@ -1,0 +1,10 @@
+skewness <- function(x) {
+    n <- length(x)
+    v <- var(x)
+    m <- mean(x)
+    third.moment <- (1 / (n - 2)) * sum((x - m)^3)
+    third.moment / (v^(3 / 2))
+}
+# Example
+x <- rnorm(100, 2, 3)
+skewness(x)
