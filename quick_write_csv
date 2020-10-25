@@ -1,0 +1,12 @@
+quick_write_csv <- function(data, file) {
+    write.table(data, file = file, sep=",", col.names = FALSE,
+                row.names = FALSE)
+}
+# Example
+a <- matrix(rnorm(100), nrow = 10, ncol = 10)
+rownames(a) <- LETTERS[1:10]
+colnames(a) <- letters[1:10]
+# set working directory
+# setwd()
+quick_write_csv(data = matrix(rnorm(25), nrow = 5, ncol = 5),
+                file = "mplus.csv")
