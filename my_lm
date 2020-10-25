@@ -1,0 +1,37 @@
+my_lm <- function(Y, X, alpha = 0.05) {
+
+  # Make sure data formats are appropriate
+  Y <- as.vector(Y)
+  X <- as.matrix(X)
+
+  # Define parameters
+  n <- length(Y)
+  p <- dim(X)[2]
+  df <- n - p
+
+  # Estimate beta through
+  beta.hat <- solve(t(X)%*%X)%*%t(X)%*%Y
+
+  # Estimate of the residual variance (sigma2)
+  # Compute residuals
+  resid <- Y - X%*%as.matrix(beta.hat)
+  sigma2.hat <- (1/df)*t(resid)%*%resid
+
+  # Estimate of the variance of the estimated beta
+  var.beta <- sigma2.hat*solve(t(X)%*%X)
+
+  # Estimate of the confidence interval based on alpha
+  quant <- 1 - alpha/2
+  ci.beta <- c(beta.hat - qnorm(p = quant)*sqrt(var.beta), beta.hat +
+                 qnorm(p = quant)*sqrt(var.beta))
+
+  # Return all estimated values
+  return(list(beta = beta.hat, sigma2 = sigma2.hat,
+              variance_beta = var.beta, ci = ci.beta))
+}
+
+
+# Example
+y <- rnorm(10, 2, 3)
+x <- matrix(rnorm(100, 1, 3), nrow = 10)
+my_lm(Y = y, X = x)
