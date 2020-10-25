@@ -1,0 +1,17 @@
+# Difference between standard deviation(variability in a sample)
+# and standard error(the precision)
+
+
+se_sd <- function(x) {
+    n <- length(x)
+    SD <- sd(x)
+    SE <- sd(x) / sqrt(n)
+    out <- list(standard_deviation = SD, 
+                standard_error = SE)
+    return(out)
+} 
+
+# Example
+set.seed(1234)
+x <- rnorm(n = 100, mean = 1, sd = 2)
+se_sd(x = x)
