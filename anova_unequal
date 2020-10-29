@@ -1,0 +1,14 @@
+# ANOVA to tets for group means with unequal sample sizes
+
+group_a <- c(4, 6, 8)
+group_b <- c(1,5)
+group_c <- c(9, 10, 15)
+
+
+data <- data.frame(
+      Y=c(group_a, group_b, group_c),
+      group =factor(rep(c("group_a", "group_b", "group_c"), 
+      times=c(length(group_a), length(group_b), length(group_c)))))
+
+group_reg <- aov(Y ~ group, data = data)
+anova(group_reg)
