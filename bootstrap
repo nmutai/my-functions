@@ -1,0 +1,503 @@
+###Bootstrap mthods
+###--------------------------------
+
+
+# Example 1 (Bootstrap esitmate of F_n)
+   B<-200
+   n<-10
+   x<-c(2,2,1,1,5,4,4,3,1,2) #observed sample
+   mpf<-matrix(0,nrow=B,ncol=5)
+   mn<-function(m,x){
+     a<-table(x)
+     b<-rep(0,m)
+     b[as.integer(names(a))]<-a
+     return(b)
+     }
+     
+   for(b in 1:B){
+    xb<-sample(1:5,n,replace=T,prob=c(0.3,0.3,0.1,0.2,0.1))
+    mpf[b,]<-mn(5,xb)/n
+    }
+   probs<-apply(mpf,2,mean)
+   
+   becdf<-cumsum(probs)
+   a<-rbind(becdf,cumsum(table(x)/n), ppois(1:5,lambda=2))
+   rownames(a)<-c("Bootstrap ecdf","ecdf","cdf")
+   a
+   
+
+### Example 2 (Bootstrap estimate of standard error)
+   
+    install.packages("bootstrap")
+    library(bootstrap)    #for the law data
+    print(cor(law$LSAT, law$GPA))
+    print(cor(law82$LSAT, law82$GPA))
+
+    #set up the bootstrap
+    B <- 200            #number of replicates
+    n <- nrow(law)      #sample size
+    R <- numeric(B)     #storage for replicates
+
+    #bootstrap estimate of standard error of R
+    for (b in 1:B) {
+        #randomly select the indices
+        i <- sample(1:n, size = n, replace = TRUE)
+        LSAT <- law$LSAT[i]       #i is a vector of indices
+        GPA <- law$GPA[i]
+        R[b] <- cor(LSAT, GPA)
+    }
+    #output
+    print(se.R <- sd(R))
+    hist(R, prob = TRUE) 
+ 
+
+
+### Example 3 (Bootstrap estimate of standard error: using boot function and bootstrap function)
+
+    tau <- function(x, i) {
+        #want correlation of columns 1 and 2
+        xi<-x[i,]
+        cor(xi[,1], xi[,2])
+    }
+
+    library(boot)       #for boot function
+    obj <- boot(data = law, statistic = tau, R = 2000)
+    obj
+    y <- obj$t
+    sd(y)
+    detach(package:boot)
+
+
+    library(bootstrap)       #for bootstrap function  
+    n <- 15
+   theta <- function(i,x){ cor(x[i,1],x[i,2]) }
+   results <- bootstrap(1:n,2000,theta,law)
+   sd(results$thetastar) 
+   
+   
+### Example  4 (Bootstrap estimate of bias)
+
+    #sample estimate 
+    theta.hat <- cor(law$LSAT, law$GPA)
+
+    #bootstrap estimate of bias
+    B <- 2000   #larger for estimating bias
+    n <- nrow(law)
+    theta.b <- numeric(B)
+
+    for (b in 1:B) {
+        i <- sample(1:n, size = n, replace = TRUE)
+        LSAT <- law$LSAT[i]
+        GPA <- law$GPA[i]
+        theta.b[b] <- cor(LSAT, GPA)
+    }
+    bias <- mean(theta.b - theta.hat)
+    bias
+
+### Example 5 (Bootstrap estiamte of bias, simulated data)
+    n<-10
+    set.seed(123)
+    x<-rnorm(n,mean=0,sd=10)
+    sigma2.hat<-(n-1)*var(x)/n
+    
+    #bootstrap estimate of bias
+    B <- 2000   #larger for estimating bias
+     
+    sigma2.b <- numeric(B)
+
+    for (b in 1:B) {
+        i <- sample(1:n, size = n, replace = TRUE)
+        sigma2.b[b] <-(n-1)*var(x[i])/n
+    }
+    bias <- mean(sigma2.b - sigma2.hat)
+    bias
+
+## Example 6: Bootstrap bias estimation for pach data
+    data(patch, package = "bootstrap")
+    patch
+    n <- nrow(patch)  #in bootstrap package
+    B <- 2000
+    theta.b <- numeric(B)
+    theta.hat <- mean(patch$y) / mean(patch$z)
+    #bootstrap
+    for (b in 1:B) {
+        i <- sample(1:n, size = n, replace = TRUE)
+        y <- patch$y[i]
+        z <- patch$z[i]
+        theta.b[b] <- mean(y) / mean(z)
+        }
+    bias <- mean(theta.b) - theta.hat
+    se <- sd(theta.b)
+    print(list(est=theta.hat, bias = bias,
+               se = se))
+
+
+### Example 7  (Jackknife estimate of bias for patch data)
+
+    data(patch, package = "bootstrap")
+    n <- nrow(patch)
+    y <- patch$y
+    z <- patch$z
+    theta.hat <- mean(y) / mean(z)
+    print (theta.hat)
+    #compute the jackknife replicates, leave-one-out estimates
+    theta.jack <- numeric(n)
+    for (i in 1:n)
+        theta.jack[i] <- mean(y[-i]) / mean(z[-i])
+    bias <- (n - 1) * (mean(theta.jack) - theta.hat)
+    print(bias)  #jackknife estimate of bias
+    
+    
+### Example 8 (Jackknife estimate of standard error)
+
+    se <- sqrt((n-1) *
+        mean((theta.jack - mean(theta.jack))^2))
+    print(se)
+    
+
+### Example 9 (Failure of jackknife because of the nonsmoothness of statistic)
+
+    set.seed(123) #for the specific example given
+    #change the seed to see other examples
+
+    n <- 10
+    x <- sample(1:100, size = n)
+
+    #jackknife estimate of se
+    M <- numeric(n)
+    for (i in 1:n) {        #leave one out
+        y <- x[-i]
+        M[i] <- median(y)
+    }
+    Mbar <- mean(M)
+    print(sqrt((n-1)/n * sum((M - Mbar)^2)))
+
+    #bootstrap estimate of se
+    Mb <- replicate(1000, expr = {
+            y <- sample(x, size = n, replace = TRUE)
+            median(y) })
+    print(sd(Mb)) 
+    #the jackknife estimate is much smaller than the bootstrap estimate, this
+    #means jackknife method fails
+     
+
+
+### Example  10 (Jackknife-after-bootstrap)
+
+    # initialize
+    data(patch, package = "bootstrap")
+    n <- nrow(patch)
+    y <- patch$y
+    z <- patch$z
+    B <- 2000
+    theta.b <- numeric(B)
+    # set up storage for the sampled indices
+    indices <- matrix(0, nrow = B, ncol = n)
+
+    # jackknife-after-bootstrap step 1: run the bootstrap
+    for (b in 1:B) {
+        i <- sample(1:n, size = n, replace = TRUE)
+        y <- patch$y[i]
+        z <- patch$z[i]
+        theta.b[b] <- mean(y) / mean(z)
+        #save the indices for the jackknife
+        indices[b, ] <- i
+        }
+
+    #jackknife-after-bootstrap to est. se(se)
+    se.jack <- numeric(n)
+    for (i in 1:n) {
+        #in i-th replicate omit all samples with x[i]
+        keep <- (1:B)[apply(indices, MARGIN = 1,
+                      FUN = function(k) {!any(k == i)})]
+        se.jack[i] <- sd(theta.b[keep])
+    }
+
+    print(sd(theta.b))
+    print(sqrt((n-1) * mean((se.jack - mean(se.jack))^2)))
+
+
+### Example  11 (Bootstrap confidence intervals for patch ratio statistic)
+
+    library(boot)       #for boot and boot.ci
+    data(patch, package = "bootstrap")
+
+    theta.boot <- function(dat, ind) {
+        #function to compute the statistic
+        y <- dat[ind, 1]
+        z <- dat[ind, 2]
+        mean(y) / mean(z)
+    }
+
+    y <- patch$y
+    z <- patch$z
+    dat <- cbind(y, z)
+    boot.obj <- boot(dat, statistic = theta.boot, R = 2000)
+
+    print(boot.obj)
+    print(boot.ci(boot.obj,
+                  type = c("basic", "norm", "perc")))
+
+
+    #calculations for bootstrap confidence intervals
+    alpha <- c(.025, .975)
+
+    #normal
+    print(boot.obj$t0 + qnorm(alpha) * sd(boot.obj$t))
+
+    #basic
+    print(2*boot.obj$t0 - 
+        quantile(boot.obj$t, rev(alpha), type=1))
+
+    #percentile
+    print(quantile(boot.obj$t, alpha, type=6))
+
+
+### Example  12 (Bootstrap confidence intervals for the correlation statistic)
+
+    library(boot)
+    data(law, package = "bootstrap")
+    boot.obj <- boot(law, R = 2000,
+             statistic = function(x, i){cor(x[i,1], x[i,2])})
+    print(boot.ci(boot.obj, type=c("basic","norm","perc")))
+
+
+### Example  13 (Bootstrap t confidence interval)
+
+    boot.t.ci <-
+    function(x, B = 500, R = 100, level = .95, statistic){
+        #compute the bootstrap t CI
+        x <- as.matrix(x);  n <- nrow(x)
+        stat <- numeric(B); se <- numeric(B)
+
+        boot.se <- function(x, R, f) {
+            #local function to compute the bootstrap
+            #estimate of standard error for statistic f(x)
+            x <- as.matrix(x); m <- nrow(x)
+            th <- replicate(R, expr = {
+                i <- sample(1:m, size = m, replace = TRUE)
+                f(x[i, ])
+                })
+            return(sd(th))
+        }
+
+        for (b in 1:B) {
+            j <- sample(1:n, size = n, replace = TRUE)
+            y <- x[j, ]
+            stat[b] <- statistic(y)
+            se[b] <- boot.se(y, R = R, f = statistic)
+        }
+        stat0 <- statistic(x)
+        t.stats <- (stat - stat0) / se
+        se0 <- sd(stat)
+        alpha <- 1 - level
+        Qt <- quantile(t.stats, c(alpha/2, 1-alpha/2), type = 1)
+        names(Qt) <- rev(names(Qt))
+        CI <- rev(stat0 - Qt * se0)
+    }
+
+# Bootstrap t confidence interval for patch ratio statistic)
+
+    #boot package and patch data were loaded in Example  11
+    #library(boot)       #for boot and boot.ci
+    #data(patch, package = "bootstrap")
+    
+    dat <- cbind(patch$y, patch$z)
+    stat <- function(dat) {
+        mean(dat[, 1]) / mean(dat[, 2]) }
+    ci <- boot.t.ci(dat, statistic = stat, B=2000, R=200)
+    print(ci)
+
+### Example 14
+#Things Bootstrapping Does Poorly
+#The principle behind bootstrapping is that sampling distributions under the
+#true process should be close to sampling distributions under good estimates of
+#the truth. 
+set.seed(-100)
+x <- runif(100)
+is.covered <- function() {
+max.boot <- replicate(1e3,max(sample(x,replace=TRUE)))
+all(1 >= 2*max(x) - quantile(max.boot,0.975),
+1 <= 2*max(x) - quantile(max.boot,0.025))
+}
+sum(replicate(1000,is.covered()))
+#When I run the last line, I get 22, so the true coverage probability is not 95%
+#but 2.2%
+
+
+### Example 15
+#Bootstrap in regression
+library(boot)
+x<-survival$dose
+y<-log(survival$surv)
+plot(x,y,xlab="Dose",ylab="log(surv)")
+#there is a clear outlier, case 13
+lm(y~x)
+lm(y[-13]~x[-13]) #omit the outlier
+
+
+#illustrate teh potential effect of an outlier in regression we resample cases, using
+surv.fun<-function(data,i){
+	d<-data[i,]
+	d.reg<-lm(log(d$surv)~d$dose)
+	c(coef(d.reg))
+}
+
+surv.boot<-boot(survival,surv.fun,R=999)
+require(lattice)
+histogram(surv.boot$t[,2],xlab="Bootstrap estimates of slope",type="density",panel = function(x, ...) {
+              panel.histogram(x, ...)
+              panel.densityplot(x,darg=list(kernel="epan",bw="nrd"),...)
+          })
+
+
+
+
+
+
+jack.after.boot(surv.boot,index=2)
+#shows clearly the outlier has an appriciate effect on the resampling distribution, and 
+#its omission would give much tighter confidence limits on the slope
+jack.after.boot(surv.boot,index=1)
+
+#when resampling residuals we can use sim=parametric in the boot call to assess the effect of 
+#outlier on the intercept and slope
+fit<-lm(log(survival$surv)~survival$dose)
+res<-resid(fit)
+f<-fitted(fit)
+surv.r.mle<-data.frame(f,res)
+surv.r.fun<-function(data){
+	coef(lm(log(data$surv)~data$dose))
+}
+surv.r.sim<-function(data,mle){
+	data$surv<-exp(mle$f+sample(mle$res,length(mle$res), replace=TRUE))
+	data
+}
+surv.r.boot<-boot(survival,surv.r.fun,R=999,sim="parametric",ran.gen=surv.r.sim,mle=surv.r.mle)
+fit.summary<-summary(fit)
+apply(surv.r.boot$t,2,mean)
+apply(surv.r.boot$t,2,sd)
+fit.summary$coef
+#the resampling means and variances agree very closely with least squares theory
+histogram(surv.r.boot$t[,2],xlab="Bootstrap estimates of slope",type="density",panel = function(x, ...) {
+              panel.histogram(x, ...)
+              panel.densityplot(x,darg=list(kernel="epan",bw="nrd"),...)
+          }) 
+
+### Example 16
+#Bootstrap in testing of hypothesis
+#two samples with the same shape under null
+n<-50
+m<-40
+x<-rnorm(n)
+y<-rnorm(m,mean=0)
+t.obs<-mean(x)-mean(y)
+t.fun<-function(data,i,n){
+	newdata<-data[i]
+	mean(newdata[1:n])-mean(newdata[-c(1:n)])
+	}
+t.boot<-boot(c(x,y),t.fun,R=999,n=n)
+(1+sum(t.boot$t>=t.obs))/(1+t.boot$R)
+t.test(x,y,alter="greater")$p.value
+
+#permutation
+t.perm<-boot(c(x,y),t.fun,R=999,n=n,sim="permutation")
+mean(t.perm$t>=t.obs)
+
+
+### Example 17
+#one sample normal test, parametric bootstrap
+#H0: mu=0<-> H1: mu>0
+set.seed(456)
+n<-5000
+x<-rnorm(n,mean=0,sd=1)
+t.obs<-mean(x)
+R=999
+t.boot<-matrix(rnorm(R*n,mean=0,sd=sd(x)),nrow=R) #generate bootstrap samples under H0
+t.star<-apply(t.boot,1,mean)
+(1+sum(t.star>=t.obs))/(1+R)
+t.test(x,alter="greater")$p.value
+ 
+
+
+one sample normal test, nonparametric bootstrap
+#H0: mu=0<-> H1: mu>0
+set.seed(456)
+n<-500
+x<-rnorm(n,mean=0.5,sd=1)
+t.obs<-mean(x)
+t.fun<-function(data,i){
+	mean(data[i])	
+}
+t.boot<-boot(x,t.fun,R=999)
+(1+sum(t.boot$t>=t.obs))/(1+t.boot$R)
+t.test(x,alter="greater")$p.value
+1-pnorm(sqrt(n)*t.obs)
+
+#why the bootstrap p-value is different from the true?
+#remember the distrubution of bootstrap replications is not the null distrubution of test statistic
+#and the null distribution of test statistic is symmetric about origin, thus we need adjust
+#the bootstrap replications
+
+(1+sum(t.boot$t-mean(t.boot$t)>=t.obs))/(1+t.boot$R)
+
+perm<-function(){
+sgn<-sample(c(-1,1),size=n,replace=TRUE)
+mean(x*sgn)>=mean(x)
+}
+sum(replicate(1000,perm()))/1000
+
+
+### Example 18
+##permutation test
+#The mouse data [Efron]. 16 mice divided assigned to a treatment group
+#(7) or a control group (9). Survival in days following a test surgery. Did the
+#treatment prolong survival ?
+trt<-c(94,197,16,38,99,141,23)
+n<-length(trt)
+ctl<-c(52,104,146,10,51,30,40,27,46)
+x<-c(trt,ctl)
+choose(16,7)
+t.obs<-mean(trt)-mean(ctl)
+t.fun<-function(data,i,n){
+	newdata<-data[i]
+	mean(newdata[1:n])-mean(newdata[-c(1:n)])
+	}
+t.boot<-boot(x,t.fun,R=999,n=n)
+(1+sum(t.boot$t>=t.obs))/(1+t.boot$R)
+t.test(trt,ctl,alter="greater")$p.value
+
+#permutation
+t.perm<-boot(x,t.fun,R=999,n=n,sim="permutation")
+mean(t.perm$t>=t.obs)
+
+
+###Example 19
+##permutation test for linear regression
+install.packages("lmPerm")
+library(lmPerm)
+install.packages("VGAM")
+library(VGAM)
+n<-50
+x<-matrix(rnorm(n*2),ncol=2)
+x<-cbind(1,x)
+y<-x%*%c(1,0.5,0)+rlaplace(n)
+summary(lm(y~-1+x))
+summary(lmp(y~-1+x,perm="Exact"))
+
+
+data("CC164")
+CC164
+#           -----1----- *****2*****++++3++++++
+#No. Plants 449 413 326 409 358 291 341 278 312
+#There seems to be a downward trend in the data with increasing levels of potash:
+#but is it real?
+summary(lm(y~P*N,data=CC164))
+#although it will estimate the coecients of the linear model, it will not produce p-values because of
+#the lack of an error estimate.
+
+summary(lmp(y~P*N,data=CC164, perm="Exact"))
+#the linear effects are not quite significant at the 5% level
+#for details, see http://cran.r-project.org/web/packages/lmPerm/vignettes/lmPerm.pdf
+
+
