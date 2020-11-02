@@ -1,0 +1,19 @@
+some_maths <- function(x, y, z) {
+        # check is vectors
+        if(!is.vector(x | y | z)){
+                stop("All arguments must be vectors")
+        }else{
+         add <- x + y +z
+         mult <- x * y * z
+         out <- list(add, mult)
+         return(out)
+        }
+}
+
+# Example
+x <- c(1,2,3,4)
+y <- c(2,3,4,5)
+z <- matrix(1:4, ncol  = 2, nrow = 2)
+t <- c(3,4,5,6)
+some_maths(x, y, z)
+some_maths(x, y, t)
