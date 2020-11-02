@@ -1,0 +1,13 @@
+central_tend <- function(y, measure) {
+  switch(measure,
+         Mean = ,
+         mean = mean(y),
+         median = median(y),
+         geometric = prod(y)^(1/length(y)),
+         "Invalid Measure")
+}
+# Example
+x <- rnorm(100)
+central_tend(x, "mean")
+central_tend(x, "median")
+central_tend(x, "geometric")
