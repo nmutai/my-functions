@@ -1,0 +1,11 @@
+my_median <- function(x) {
+  n <- length(x)
+  sort_x <- sort(x)
+  if(n%%2==0) {
+    median <- (sort_x[n/2]+sort_x[1+n/2])/2
+  } else median <- sort_x[(n+1)/2]
+  median
+}
+# Example
+x <- c(5,4,2,8,9,10)
+my_median(x)
