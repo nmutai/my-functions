@@ -1,0 +1,13 @@
+# Reciprocal
+recip <- function(x) {
+        for (i in seq_along(x)) {
+                if(x[i]!=0){
+                        print(1/x[i])
+                } else{
+                        print("No reciprocal for the number.")
+                } 
+        }
+}
+# Example
+x <- c(0:4)
+recip(x)
